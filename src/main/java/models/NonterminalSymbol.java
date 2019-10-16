@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mycompany.ll.parser;
+package models;
 
 import java.util.ArrayList;
 
@@ -11,18 +11,18 @@ import java.util.ArrayList;
  *
  * @author brian
  */
-public class Production {
+public class NonterminalSymbol {
     private String symbol;
-    private ArrayList<String> production;
+    private ArrayList<String> productions;
 
-    public Production(String symbol, ArrayList<String> production) {
+    public NonterminalSymbol(String symbol, ArrayList<String> productions) {
         this.symbol = symbol;
-        this.production = production;
+        this.productions = productions;
     }
     
-    public Production(String symbol) {
+    public NonterminalSymbol(String symbol) {
         this.symbol = symbol;
-        this.production = new ArrayList<>();
+        this.productions = new ArrayList<>();
     }
 
     public String getSymbol() {
@@ -33,11 +33,11 @@ public class Production {
         this.symbol = symbol;
     }
 
-    public ArrayList<String> getProduction() {
-        return production;
+    public ArrayList<String> getProductions() {
+        return productions;
     }
 
-    public void setProduction(ArrayList<String> production) {
-        this.production = production;
+    public void setProduction(ArrayList<String> productions) {
+        this.productions = productions;
     }
 }

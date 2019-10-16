@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mycompany.ll.parser;
+package views;
 
+import models.NonterminalSymbol;
+import controllers.ContextFreeGrammarController;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,23 +24,25 @@ public class UI extends javax.swing.JFrame {
     public UI() {
         initComponents();
         this.productionsJList.setModel(new DefaultListModel());
+        this.test();
     }
     
     private void test() {
         File file = new File(System.getProperty("user.home") + File.separator + "Desktop" + File.separator + "test.txt");
         try {
-            ArrayList<Production> gs = Util.readCFGFromFile(file);
+            ArrayList<NonterminalSymbol> gs = ContextFreeGrammarController.readCFGFromFile (file);
+            ContextFreeGrammarController.cleanCFG(gs);
             this.showCFG(gs);
         } catch (IOException e) {
             System.err.println(e);
         }
     }
     
-    private void showCFG(ArrayList<Production> productions) {
+    private void showCFG(ArrayList<NonterminalSymbol> productions) {
         DefaultListModel dlm  = (DefaultListModel) this.productionsJList
             .getModel();
         productions.forEach((gs) -> {
-            gs.getProduction().forEach((production) -> {
+            gs.getProductions().forEach((production) -> {
                 dlm.addElement(gs.getSymbol() + "->" + production);
             }); 
         });
