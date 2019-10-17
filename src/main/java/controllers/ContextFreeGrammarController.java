@@ -12,6 +12,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -63,6 +66,8 @@ public class ContextFreeGrammarController {
                     nonterminalSymbol,
                     prodIndexWithLeftRecursivity
                 );
+            } else {
+                findLeftFactorization(cfg, nonterminalSymbol);
             }
         });
     }
@@ -108,5 +113,67 @@ public class ContextFreeGrammarController {
         String production
     ) {
         return production.startsWith(nonterminalSymbol);
+    }
+    
+    private static void findLeftFactorization(
+        ArrayList<NonterminalSymbol> cfg,
+        NonterminalSymbol nonterminalSymbol
+    ) {
+        ArrayList<String> productions = nonterminalSymbol.getProductions();
+        Map<String,ArrayList<Integer>> matchesMap = new HashMap<>();  
+        productions.forEach((production) -> {
+            for (int i = 0; i < production.length(); i++) {
+                String prefix = production.substring(0, i + 1);
+                if (!matchesMap.containsKey(prefix)) {
+                    matchesMap.put(prefix, findPrefixMatches(nonterminalSymbol, prefix));
+                }
+            }
+        });
+        String greatestPrefix = null;
+        int greatestPrefixMatches = 1;
+        for (Map.Entry<String,ArrayList<Integer>> m : matchesMap.entrySet()) {
+            int size = m.getValue().size();
+            if (size > greatestPrefixMatches) {
+                greatestPrefixMatches = size;
+                greatestPrefix = m.getKey();
+            }
+        }
+        if (greatestPrefix != null) {
+            ArrayList<String> prods = new ArrayList<>();
+            ArrayList<Integer> prodIndices = matchesMap.get(greatestPrefix);
+            prodIndices.sort(Comparator.reverseOrder());
+            for (int prodIndex : prodIndices) {
+                String newProd = productions.get(prodIndex)
+                    .substring(greatestPrefix.length());
+                if (newProd.isEmpty()) {
+                    newProd = "&";
+                }
+                prods.add(newProd);
+                productions.remove(prodIndex);
+            }
+            String newNTSymbol = nonterminalSymbol.getSymbol() + "'";
+            productions.add(greatestPrefix + newNTSymbol);
+            cfg.add(
+                cfg.indexOf(nonterminalSymbol) + 1,
+                new NonterminalSymbol(newNTSymbol, prods)
+            );
+            
+        }
+    }
+    
+    private static ArrayList<Integer> findPrefixMatches(
+        NonterminalSymbol nonterminalSymbol,
+        String prefix
+    ) {
+        ArrayList<Integer> factorizableProductions = new ArrayList<>();
+        ArrayList<String> productions = nonterminalSymbol.getProductions();
+        int index = 0;
+        for (String production : productions) {
+            if (production.startsWith(prefix)) {
+                factorizableProductions.add(index);
+            }
+            index++;
+        }
+        return factorizableProductions;
     }
 }
