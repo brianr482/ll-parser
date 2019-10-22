@@ -74,18 +74,18 @@ public class ContextFreeGrammarController {
                 new LinkedHashSet<>()
             );
             nonterminalSymbol.getProductions().forEach((production) -> {
-                Set<String> firstPosition;
                 String firstChar = production.substring(0, 1);
                 boolean isNonterminal = isNonterminal(cfg, firstChar);
-                firstPosition = isNonterminal ? pending.get(firstChar)
+                Set<String> firstPositionL = isNonterminal 
+                    ? pending.get(nonterminalSymbol.getSymbol())
                     : firstPositionList.get(nonterminalSymbol.getSymbol());
-                if (isNonterminal && firstPosition == null) {
+                if (isNonterminal && firstPositionL == null) {
                     pending.put(
                         nonterminalSymbol.getSymbol(),
                         new LinkedHashSet<>(Arrays.asList(firstChar))
                     );
                 } else {
-                    firstPosition.add(firstChar);
+                    firstPositionL.add(firstChar);
                 }
             });
         });

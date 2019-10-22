@@ -201,9 +201,9 @@ public class UI extends javax.swing.JFrame {
         });
         jScrollPane3.setViewportView(nextPosJList);
 
-        jLabel4.setText("Primera pos.");
+        jLabel4.setText("Primero");
 
-        jLabel5.setText("Siguiente pos.");
+        jLabel5.setText("Siguiente");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -234,7 +234,7 @@ public class UI extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Prim/Sgte pos", jPanel1);
+        jTabbedPane1.addTab("Prim/Sgte", jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
