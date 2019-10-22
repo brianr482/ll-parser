@@ -12,9 +12,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -40,16 +45,7 @@ public class ContextFreeGrammarController {
             production.getProductions().add(productionLine[1]);
         }
         return cfg;
-    }
-    
-    private static NonterminalSymbol findProduction(
-        ArrayList<NonterminalSymbol> productions, String gs
-    ) {
-        return productions.stream()
-            .filter(production -> production.getSymbol().equals(gs))
-            .findFirst()
-            .orElse(null);
-    }
+    }   
     
     public static void cleanCFG(ArrayList<NonterminalSymbol> cfg) {
         ArrayList<NonterminalSymbol> cfgClone = new ArrayList<>();
@@ -70,6 +66,75 @@ public class ContextFreeGrammarController {
                 findLeftFactorization(cfg, nonterminalSymbol);
             }
         });
+    }
+    
+    public static Map<String, Set<String>> getFirstPositionList(
+        ArrayList<NonterminalSymbol> cfg
+    ) {
+        Map<String, Set<String>> firstPositionList = new LinkedHashMap<>();
+        Map<String, Set<String>> pending = new LinkedHashMap<>();
+        cfg.forEach((nonterminalSymbol) -> {
+            firstPositionList.put(
+                nonterminalSymbol.getSymbol(),
+                new LinkedHashSet<>()
+            );
+            nonterminalSymbol.getProductions().forEach((production) -> {
+                Set<String> firstPosition;
+                String firstChar = production.substring(0, 1);
+                boolean isNonterminal = isNonterminal(cfg, firstChar);
+                firstPosition = isNonterminal ? pending.get(firstChar)
+                    : firstPositionList.get(nonterminalSymbol.getSymbol());
+                if (isNonterminal && firstPosition == null) {
+                    pending.put(
+                        nonterminalSymbol.getSymbol(),
+                        new LinkedHashSet<>(Arrays.asList(firstChar))
+                    );
+                } else {
+                    firstPosition.add(firstChar);
+                }
+            });
+        });
+        Map<String, Set<String>> sortedPending = new LinkedHashMap<>();
+        Map<String, Set<String>> dependentPending = new LinkedHashMap<>();
+        pending.entrySet().forEach((pend) -> {
+            Set<String> firstPositions = pend.getValue();
+            firstPositions.forEach((nonterminal) -> {
+                String key = pend.getKey();
+                Map<String, Set<String>> map = pending.containsKey(nonterminal)
+                        ? dependentPending : sortedPending;
+                map.put(key, pend.getValue());
+            });
+        });
+        sortedPending.putAll(dependentPending);
+        sortedPending.entrySet().forEach((pend) -> {
+            Set<String> nonterminalFirstPosList =  firstPositionList
+                    .get(pend.getKey());
+            pend.getValue().forEach(pendingFirstPos -> {
+                Set<String> pendingFirstPosList = firstPositionList
+                        .get(pendingFirstPos);
+                pendingFirstPosList.forEach(terminal -> {
+                    nonterminalFirstPosList.add(terminal);
+                });
+            });
+        });
+        return firstPositionList;
+    }
+    
+    private static boolean isNonterminal(
+        ArrayList<NonterminalSymbol> cfg, String symbol
+    ) {
+        return cfg.stream().anyMatch(nonterminalSymbol -> 
+            nonterminalSymbol.getSymbol().equals(symbol)
+        );
+    }
+    
+    private static NonterminalSymbol findProduction(
+        ArrayList<NonterminalSymbol> productions, String gs
+    ) {
+        return productions.stream()
+            .filter(production -> production.getSymbol().equals(gs))
+            .findFirst()
+            .orElse(null);
     }
     
     private static void removeLeftRecursivity(
@@ -120,7 +185,7 @@ public class ContextFreeGrammarController {
         NonterminalSymbol nonterminalSymbol
     ) {
         ArrayList<String> productions = nonterminalSymbol.getProductions();
-        Map<String,ArrayList<Integer>> matchesMap = new HashMap<>();  
+        Map<String,ArrayList<Integer>> matchesMap = new HashMap<>();
         productions.forEach((production) -> {
             for (int i = 0; i < production.length(); i++) {
                 String prefix = production.substring(0, i + 1);

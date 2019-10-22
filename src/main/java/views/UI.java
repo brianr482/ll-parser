@@ -10,6 +10,8 @@ import controllers.ContextFreeGrammarController;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.DefaultListModel;
 
 /**
@@ -24,28 +26,50 @@ public class UI extends javax.swing.JFrame {
     public UI() {
         initComponents();
         this.productionsJList.setModel(new DefaultListModel());
+        this.firstPosJList.setModel(new DefaultListModel());
         this.test();
     }
     
     private void test() {
         File file = new File(System.getProperty("user.home") + File.separator + "Desktop" + File.separator + "test.txt");
         try {
-            ArrayList<NonterminalSymbol> gs = ContextFreeGrammarController.readCFGFromFile (file);
-            ContextFreeGrammarController.cleanCFG(gs);
-            this.showCFG(gs);
+            ArrayList<NonterminalSymbol> cfg = ContextFreeGrammarController.readCFGFromFile (file);
+            ContextFreeGrammarController.cleanCFG(cfg);
+            this.showCFG(cfg);
+            this.showFirstPositions(cfg);
         } catch (IOException e) {
             System.err.println(e);
         }
     }
     
-    private void showCFG(ArrayList<NonterminalSymbol> productions) {
+    private void showCFG(ArrayList<NonterminalSymbol> cfg) {
         DefaultListModel dlm  = (DefaultListModel) this.productionsJList
             .getModel();
-        productions.forEach((gs) -> {
+        cfg.forEach((gs) -> {
             gs.getProductions().forEach((production) -> {
                 dlm.addElement(gs.getSymbol() + "->" + production);
             }); 
         });
+    }
+    
+    private void showFirstPositions(ArrayList<NonterminalSymbol> cfg) {
+        Map<String, Set<String>> firstPositionList =
+            ContextFreeGrammarController.getFirstPositionList(cfg);
+        DefaultListModel dlm  = (DefaultListModel) this.firstPosJList
+            .getModel();
+        for (Map.Entry<String,Set<String>> nonterminalSymbol 
+            : firstPositionList.entrySet()) {
+            String parsedNonterminalSymbolFirstPost = "prim("
+                + nonterminalSymbol.getKey() + ") = { ";
+            parsedNonterminalSymbolFirstPost = nonterminalSymbol.getValue()
+                .stream()
+                .map((terminal) -> terminal + ", ")
+                .reduce(parsedNonterminalSymbolFirstPost, String::concat);
+            parsedNonterminalSymbolFirstPost = parsedNonterminalSymbolFirstPost
+                .substring(0, parsedNonterminalSymbolFirstPost.length() - 2);
+            parsedNonterminalSymbolFirstPost += " }";
+            dlm.addElement(parsedNonterminalSymbolFirstPost);
+        }
     }
 
     /**
@@ -67,6 +91,13 @@ public class UI extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         productionsJList = new javax.swing.JList<>();
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        firstPosJList = new javax.swing.JList<>();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        nextPosJList = new javax.swing.JList<>();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -86,24 +117,21 @@ public class UI extends javax.swing.JFrame {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jSeparator1))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(14, 14, 14)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2)
-                                    .addGroup(jPanel3Layout.createSequentialGroup()
-                                        .addGap(65, 65, 65)
-                                        .addComponent(jButton1))))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(65, 65, 65)
-                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 9, Short.MAX_VALUE)))
+                .addContainerGap()
+                .addComponent(jSeparator1)
                 .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addGap(0, 60, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(65, 65, 65)
+                        .addComponent(jButton1)))
+                .addGap(38, 38, 38))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(81, 81, 81))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -119,7 +147,7 @@ public class UI extends javax.swing.JFrame {
                 .addGap(70, 70, 70))
         );
 
-        jTabbedPane1.addTab("Cargar archivo", jPanel3);
+        jTabbedPane1.addTab("Archivo", jPanel3);
 
         jLabel1.setText("Producciones sin vicios");
 
@@ -134,10 +162,10 @@ public class UI extends javax.swing.JFrame {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(92, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(jLabel1)
-                .addGap(86, 86, 86))
+                .addContainerGap(241, Short.MAX_VALUE))
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel2Layout.createSequentialGroup()
                     .addContainerGap()
@@ -157,13 +185,62 @@ public class UI extends javax.swing.JFrame {
                     .addContainerGap()))
         );
 
-        jTabbedPane1.addTab("Gramática sin vicios", jPanel2);
+        jTabbedPane1.addTab("GIC sin vicios", jPanel2);
+
+        firstPosJList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane2.setViewportView(firstPosJList);
+
+        nextPosJList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane3.setViewportView(nextPosJList);
+
+        jLabel4.setText("Primera pos.");
+
+        jLabel5.setText("Siguiente pos.");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Prim/Sgte pos", jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 347, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jTabbedPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -209,15 +286,22 @@ public class UI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<String> firstPosJList;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JList<String> nextPosJList;
     private javax.swing.JList<String> productionsJList;
     // End of variables declaration//GEN-END:variables
 }
