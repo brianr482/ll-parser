@@ -13,7 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,14 +52,10 @@ public class ContextFreeGrammarController {
             cfgClone.add(nonterminalSymbol);
         });
         cfgClone.forEach((nonterminalSymbol) -> {
-            int prodIndexWithLeftRecursivity = findLeftRecursivity(
-                nonterminalSymbol
-            );
-            if (prodIndexWithLeftRecursivity > -1) {
-                removeLeftRecursivity(
+            if (findLeftRecursion(nonterminalSymbol)) {
+                removeLeftRecursion(
                     cfg,
-                    nonterminalSymbol,
-                    prodIndexWithLeftRecursivity
+                    nonterminalSymbol
                 );
             } else {
                 findLeftFactorization(cfg, nonterminalSymbol);
@@ -137,48 +132,50 @@ public class ContextFreeGrammarController {
             .orElse(null);
     }
     
-    private static void removeLeftRecursivity(
+    private static void removeLeftRecursion(
         ArrayList<NonterminalSymbol> cfg,
-        NonterminalSymbol nonterminalSymbol,
-        int productionIndex
+        NonterminalSymbol nonterminalSymbol
     ) {
         ArrayList<String> productions = nonterminalSymbol.getProductions();
-        String production = productions.get(productionIndex);
         ArrayList<String> prods = new ArrayList<>();
+        ArrayList<String> newOriginalNonterminalProductions = new ArrayList<>();
         String newNTSymbol = nonterminalSymbol.getSymbol() + "'";
-        prods.add(production.substring(1) + newNTSymbol);
+        for (int i = 0; i < productions.size(); i++) {
+            String prod = productions.get(i);
+            if (prod.startsWith(nonterminalSymbol.getSymbol())) {
+                prods.add(prod.substring(1) + newNTSymbol);
+            } else {
+                newOriginalNonterminalProductions.add(prod + newNTSymbol);
+            }
+        }
         prods.add("&");
+        nonterminalSymbol.setProduction(newOriginalNonterminalProductions);
         cfg.add(
             cfg.indexOf(nonterminalSymbol) + 1,
             new NonterminalSymbol(newNTSymbol, prods)
         );
-        productions.remove(0);
-        for (int i = 0; i < productions.size(); i++) {
-            String prod = productions.get(i);
-            productions.set(i, prod + newNTSymbol);
-        }
     }
     
-    private static int findLeftRecursivity(NonterminalSymbol nonterminalSymbol) {
+    private static boolean findLeftRecursion(NonterminalSymbol nonterminalSymbol) {
         int index = 0;
         ArrayList<String> productions = nonterminalSymbol.getProductions();
         while (index < productions.size()) {
             String production = productions.get(index);
-            if (hasLeftRecursivity(nonterminalSymbol.getSymbol(), production)) {
-                return index;
+            if (hasLeftRecursion(nonterminalSymbol.getSymbol(), production)) {
+                return true;
             } else {
                 index++;
             }
         }
-        return -1;
+        return false;
     }
     
-    private static boolean hasLeftRecursivity(
+    private static boolean hasLeftRecursion(
         String nonterminalSymbol,
         String production
     ) {
         return production.startsWith(nonterminalSymbol);
-    }
+    }   
     
     private static void findLeftFactorization(
         ArrayList<NonterminalSymbol> cfg,
