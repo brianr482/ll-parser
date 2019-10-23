@@ -6,6 +6,7 @@
 package models;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -17,6 +18,7 @@ public class NonterminalSymbol {
     private ArrayList<String> productions;
     private Set<String> firstList;
     private Set<String> followingList;
+    private Map<String, String> mTableAssociation;
 
     public Set<String> getFollowingList() {
         return followingList;
@@ -58,5 +60,13 @@ public class NonterminalSymbol {
 
     public void setFirstList(Set<String> firstList) {
         this.firstList = firstList;
+    }
+    
+    public Map<String, String> getmTableAssociation() {
+        return mTableAssociation;
+    }
+
+    public void setmTableAssociation(Map<String, String> mTableAssociation) {
+        this.mTableAssociation = mTableAssociation;
     }
 }

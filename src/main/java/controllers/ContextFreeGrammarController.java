@@ -155,7 +155,7 @@ public class ContextFreeGrammarController {
                 });
             });
         });
-        
+        completeCFGMAssociation(cfg);
        return followingList;
     }
     
@@ -166,7 +166,9 @@ public class ContextFreeGrammarController {
         Map<String, Set<String>> pending = new LinkedHashMap<>();
         cfg.forEach((nonterminalSymbol) -> {
             Set<String> firstSet = new LinkedHashSet<>();
+            Map<String, String> mAssociationList = new LinkedHashMap<>();
             nonterminalSymbol.setFirstList(firstSet);
+            nonterminalSymbol.setmTableAssociation(mAssociationList);
             firstPositionList.put(nonterminalSymbol.getSymbol(),firstSet);
             nonterminalSymbol.getProductions().forEach((production) -> {
                 String firstChar = production.substring(0, 1);
@@ -182,6 +184,7 @@ public class ContextFreeGrammarController {
                 } else {
                     firstPositionL.add(firstChar);
                 }
+                mAssociationList.put(firstChar, production);
             });
         });
         Map<String, Set<String>> sortedPending = new LinkedHashMap<>();
@@ -198,16 +201,53 @@ public class ContextFreeGrammarController {
         sortedPending.putAll(dependentPending);
         sortedPending.entrySet().forEach((pend) -> {
             Set<String> nonterminalFirstPosList =  firstPositionList
-                    .get(pend.getKey());
+                .get(pend.getKey());
             pend.getValue().forEach(pendingFirstPos -> {
                 Set<String> pendingFirstPosList = firstPositionList
-                        .get(pendingFirstPos);
+                    .get(pendingFirstPos);
+                NonterminalSymbol ns = cfg.stream()
+                    .filter(nte -> nte.getSymbol().equals(pend.getKey()))
+                    .findAny()
+                    .orElse(null);
+                String prodForMTable = ns.getmTableAssociation()
+                    .get(pendingFirstPos);
+                ns.getmTableAssociation().remove(pendingFirstPos);
                 pendingFirstPosList.forEach(terminal -> {
                     nonterminalFirstPosList.add(terminal);
+                    ns.getmTableAssociation().put(terminal, prodForMTable);
                 });
             });
         });
         return firstPositionList;
+    }
+    
+    public static Set<String> getTerminalList(
+        ArrayList<NonterminalSymbol> cfg
+    ) {
+        Set<String> terminalList = new LinkedHashSet<>();
+        cfg.forEach(nonterminal -> {
+            nonterminal.getProductions().forEach(production -> {
+                boolean isPrevANonterminal = false;
+                for(char c : production.toCharArray()) {
+                    String parsedChar = Character.toString(c);
+                    if (!isNonterminal(cfg, parsedChar)) {
+                        if (!parsedChar.equals("&")) {
+                            if (
+                                (parsedChar.equals("'") && !isPrevANonterminal) 
+                                || !parsedChar.equals("'")
+                            ) {
+                                terminalList.add(parsedChar);
+                            }
+                        }
+                        isPrevANonterminal = false;
+                    } else {
+                        isPrevANonterminal = true;
+                    }
+                }
+            });
+        });
+        terminalList.add("$");
+        return terminalList;
     }
     
     private static boolean isNonterminal(
@@ -332,5 +372,22 @@ public class ContextFreeGrammarController {
             index++;
         }
         return factorizableProductions;
+    }
+    
+    private static void completeCFGMAssociation(ArrayList<NonterminalSymbol> cfg) {
+        cfg.forEach(nonterminal -> {
+            replaceEpsilonInMAssociation(nonterminal);
+        });
+    }
+    
+    private static void replaceEpsilonInMAssociation(NonterminalSymbol nonterminal) {
+        Map<String, String> mTableAssociation = nonterminal.getmTableAssociation();
+        String production = mTableAssociation.get("&");
+        if (production != null) {
+            mTableAssociation.remove("&");
+            nonterminal.getFollowingList().forEach(terminal -> {
+                mTableAssociation.put(terminal, production);
+            });
+        }
     }
 }
