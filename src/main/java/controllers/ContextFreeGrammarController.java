@@ -63,16 +63,111 @@ public class ContextFreeGrammarController {
         });
     }
     
+    public static Map<String, Set<String>> getFollowingList(
+        ArrayList<NonterminalSymbol> cfg
+    ) {
+        Map<String, Set<String>> followingList = new LinkedHashMap<>();
+        Map<String, Set<String>> pending = new LinkedHashMap<>();
+        cfg.forEach(nonterminal -> {
+            Set<String> nonterminalFollowingList = new LinkedHashSet<>();
+            followingList.put(
+                nonterminal.getSymbol(),
+                nonterminalFollowingList
+            );
+            nonterminal.setFollowingList(nonterminalFollowingList);
+            String nonterminalSymbol = nonterminal.getSymbol();
+            cfg.stream()
+                .filter(nt -> !nt.getSymbol().equals(nonterminalSymbol))
+                .forEach(nt -> {
+                nt.getProductions().forEach(production -> {
+                    if (production.endsWith(nonterminalSymbol)) {
+                        pending.putIfAbsent(
+                            nonterminalSymbol, new LinkedHashSet<>()
+                        );
+                        pending.get(nonterminalSymbol).add(nt.getSymbol());
+                    } else if (production.contains(nonterminalSymbol)) {
+                        int followingIndex = production
+                            .indexOf(nonterminalSymbol) + 1;
+                        int followingSymbolIndexLimit = followingIndex + 1;
+                        if (
+                            followingIndex + 1 != production.length() 
+                            && production.substring(
+                                followingIndex + 1, followingIndex + 2
+                            ).equals("'")
+                        ) {
+                            followingSymbolIndexLimit++;
+                        }
+                        String followingGSymbol = production.substring(
+                            followingIndex,
+                            followingSymbolIndexLimit
+                        );
+                        if (isNonterminal(cfg, followingGSymbol)) {
+                            Set<String> foreignFirstList = cfg.stream().filter(
+                                nte -> nte.getSymbol().equals(followingGSymbol)
+                            ).findAny().orElse(null).getFirstList();
+                            foreignFirstList.forEach(terminal -> {
+                                if (terminal.equals("&")) {
+                                    pending.putIfAbsent(
+                                        nonterminalSymbol, new LinkedHashSet<>()
+                                    );
+                                    pending.get(nonterminalSymbol)
+                                        .add(nt.getSymbol());
+                                } else {
+                                    followingList.get(nonterminalSymbol).add(
+                                        terminal
+                                   );
+                                }
+                            });
+                            pending.putIfAbsent(
+                                nonterminalSymbol, new LinkedHashSet<>()
+                            );
+                            pending.get(nonterminalSymbol).add(followingGSymbol);
+                        } else {
+                            followingList.get(nonterminalSymbol).add(
+                                followingGSymbol
+                            );
+                        }
+                    }
+                });
+            });
+        });
+        followingList.get(cfg.get(0).getSymbol()).add("$");
+        Map<String, Set<String>> sortedPending = new LinkedHashMap<>();
+        Map<String, Set<String>> dependentPending = new LinkedHashMap<>();
+        pending.entrySet().forEach((pend) -> {
+            Set<String> followingSet = pend.getValue();
+            followingSet.forEach((nonterminal) -> {
+                String key = pend.getKey();
+                Map<String, Set<String>> map = pending.containsKey(nonterminal)
+                        ? dependentPending : sortedPending;
+                map.put(key, pend.getValue());
+            });
+        });
+        sortedPending.putAll(dependentPending);
+        sortedPending.entrySet().forEach((pend) -> {
+            Set<String> nonterminalFollowingList =  followingList
+                .get(pend.getKey());
+            pend.getValue().forEach(pendingFollowing -> {
+                Set<String> pendingFollowingList = followingList
+                    .get(pendingFollowing);
+                pendingFollowingList.forEach(terminal -> {
+                    nonterminalFollowingList.add(terminal);
+                });
+            });
+        });
+        
+       return followingList;
+    }
+    
     public static Map<String, Set<String>> getFirstPositionList(
         ArrayList<NonterminalSymbol> cfg
     ) {
         Map<String, Set<String>> firstPositionList = new LinkedHashMap<>();
         Map<String, Set<String>> pending = new LinkedHashMap<>();
         cfg.forEach((nonterminalSymbol) -> {
-            firstPositionList.put(
-                nonterminalSymbol.getSymbol(),
-                new LinkedHashSet<>()
-            );
+            Set<String> firstSet = new LinkedHashSet<>();
+            nonterminalSymbol.setFirstList(firstSet);
+            firstPositionList.put(nonterminalSymbol.getSymbol(),firstSet);
             nonterminalSymbol.getProductions().forEach((production) -> {
                 String firstChar = production.substring(0, 1);
                 boolean isNonterminal = isNonterminal(cfg, firstChar);

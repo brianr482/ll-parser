@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.DefaultListModel;
+import javax.swing.JList;
 
 /**
  *
@@ -26,7 +27,8 @@ public class UI extends javax.swing.JFrame {
     public UI() {
         initComponents();
         this.productionsJList.setModel(new DefaultListModel());
-        this.firstPosJList.setModel(new DefaultListModel());
+        this.firstJList.setModel(new DefaultListModel());
+        this.followingJList.setModel(new DefaultListModel());
         this.test();
     }
     
@@ -36,7 +38,14 @@ public class UI extends javax.swing.JFrame {
             ArrayList<NonterminalSymbol> cfg = ContextFreeGrammarController.readCFGFromFile (file);
             ContextFreeGrammarController.cleanCFG(cfg);
             this.showCFG(cfg);
-            this.showFirstPositions(cfg);
+            this.showFirstFollowing(ContextFreeGrammarController.getFirstPositionList(cfg),
+                "PRIM",
+                this.firstJList
+            );
+            this.showFirstFollowing(ContextFreeGrammarController.getFollowingList(cfg),
+                "SGTE",
+                this.followingJList
+            );
         } catch (IOException e) {
             System.err.println(e);
         }
@@ -52,14 +61,14 @@ public class UI extends javax.swing.JFrame {
         });
     }
     
-    private void showFirstPositions(ArrayList<NonterminalSymbol> cfg) {
-        Map<String, Set<String>> firstPositionList =
-            ContextFreeGrammarController.getFirstPositionList(cfg);
-        DefaultListModel dlm  = (DefaultListModel) this.firstPosJList
+    private void showFirstFollowing(
+        Map<String, Set<String>> list, String label, JList jList
+    ) {
+        DefaultListModel dlm  = (DefaultListModel) jList
             .getModel();
         for (Map.Entry<String,Set<String>> nonterminalSymbol 
-            : firstPositionList.entrySet()) {
-            String parsedNonterminalSymbolFirstPost = "prim("
+            : list.entrySet()) {
+            String parsedNonterminalSymbolFirstPost = label + "("
                 + nonterminalSymbol.getKey() + ") = { ";
             parsedNonterminalSymbolFirstPost = nonterminalSymbol.getValue()
                 .stream()
@@ -67,6 +76,7 @@ public class UI extends javax.swing.JFrame {
                 .reduce(parsedNonterminalSymbolFirstPost, String::concat);
             parsedNonterminalSymbolFirstPost = parsedNonterminalSymbolFirstPost
                 .substring(0, parsedNonterminalSymbolFirstPost.length() - 2);
+            
             parsedNonterminalSymbolFirstPost += " }";
             dlm.addElement(parsedNonterminalSymbolFirstPost);
         }
@@ -93,9 +103,9 @@ public class UI extends javax.swing.JFrame {
         productionsJList = new javax.swing.JList<>();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        firstPosJList = new javax.swing.JList<>();
+        firstJList = new javax.swing.JList<>();
         jScrollPane3 = new javax.swing.JScrollPane();
-        nextPosJList = new javax.swing.JList<>();
+        followingJList = new javax.swing.JList<>();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
 
@@ -187,19 +197,19 @@ public class UI extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("GIC sin vicios", jPanel2);
 
-        firstPosJList.setModel(new javax.swing.AbstractListModel<String>() {
+        firstJList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane2.setViewportView(firstPosJList);
+        jScrollPane2.setViewportView(firstJList);
 
-        nextPosJList.setModel(new javax.swing.AbstractListModel<String>() {
+        followingJList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane3.setViewportView(nextPosJList);
+        jScrollPane3.setViewportView(followingJList);
 
         jLabel4.setText("Primero");
 
@@ -286,7 +296,8 @@ public class UI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> firstPosJList;
+    private javax.swing.JList<String> firstJList;
+    private javax.swing.JList<String> followingJList;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -301,7 +312,6 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JList<String> nextPosJList;
     private javax.swing.JList<String> productionsJList;
     // End of variables declaration//GEN-END:variables
 }

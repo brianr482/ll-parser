@@ -6,6 +6,7 @@
 package models;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  *
@@ -14,7 +15,17 @@ import java.util.ArrayList;
 public class NonterminalSymbol {
     private String symbol;
     private ArrayList<String> productions;
+    private Set<String> firstList;
+    private Set<String> followingList;
 
+    public Set<String> getFollowingList() {
+        return followingList;
+    }
+
+    public void setFollowingList(Set<String> followingList) {
+        this.followingList = followingList;
+    }
+    
     public NonterminalSymbol(String symbol, ArrayList<String> productions) {
         this.symbol = symbol;
         this.productions = productions;
@@ -39,5 +50,13 @@ public class NonterminalSymbol {
 
     public void setProduction(ArrayList<String> productions) {
         this.productions = productions;
+    }
+    
+    public Set<String> getFirstList() {
+        return firstList;
+    }
+
+    public void setFirstList(Set<String> firstList) {
+        this.firstList = firstList;
     }
 }
