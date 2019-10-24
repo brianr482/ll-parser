@@ -14,7 +14,10 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.DefaultListModel;
+import javax.swing.JFileChooser;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import models.RecognitionRecord;
 
@@ -42,11 +45,24 @@ public class UI extends javax.swing.JFrame {
         this.recognitonTableModel.addColumn("Pila");
         this.recognitonTableModel.addColumn("Entrada");
         this.recognitonTableModel.addColumn("salida");
-        this.test();
+        this.toggleTabs(false);
+        this.jFileChooser.setFileFilter(
+            new FileNameExtensionFilter("TEXT FILES", "txt", "text")
+        );
     }
     
     private void test() {
-        File file = new File(System.getProperty("user.home") + File.separator + "Desktop" + File.separator + "test.txt");
+        File file = new File(
+           System.getProperty("user.home")
+           + File.separator
+           + "Desktop"
+           + File.separator
+           + "test.txt"
+        );
+        readCFGFromFile(file);
+    }
+    
+    private void readCFGFromFile(File file) {
         try {
             this.cfg = ContextFreeGrammarController.readCFGFromFile (file);
             ContextFreeGrammarController.cleanCFG(this.cfg);
@@ -62,7 +78,17 @@ public class UI extends javax.swing.JFrame {
             Set<String> terminalList = ContextFreeGrammarController
                 .getTerminalList(this.cfg);
             this.populateMTable(terminalList);
+            this.readFileLabel.setText(file.getName());
+            this.toggleTabs(true);
+            JOptionPane.showMessageDialog(
+                this,
+                "El archivo se ha leído correctamente"
+            );
         } catch (IOException e) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Ocurrió un error al leer el archivo"
+            );
             System.err.println(e);
         }
     }
@@ -73,7 +99,7 @@ public class UI extends javax.swing.JFrame {
         this.cfg.forEach((gs) -> {
             gs.getProductions().forEach((production) -> {
                 dlm.addElement(gs.getSymbol() + "->" + production);
-            }); 
+            });
         });
     }
     
@@ -140,6 +166,13 @@ public class UI extends javax.swing.JFrame {
         });
     }
     
+    private void toggleTabs(boolean enable) {
+        this.jTabbedPane.setEnabledAt(1, enable);
+        this.jTabbedPane.setEnabledAt(2, enable);
+        this.jTabbedPane.setEnabledAt(3, enable);
+        this.jTabbedPane.setEnabledAt(4, enable);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -149,12 +182,15 @@ public class UI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jFileChooser = new javax.swing.JFileChooser();
+        jTabbedPane = new javax.swing.JTabbedPane();
         jPanel3 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel3 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        readFileLabel = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -181,6 +217,11 @@ public class UI extends javax.swing.JFrame {
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
         jButton1.setText("Seleccionar archivo");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jLabel2.setText("Cargar un archivo de texto que contenga la GIC");
 
@@ -189,43 +230,54 @@ public class UI extends javax.swing.JFrame {
         jLabel3.setText("<html> <center>Analizador Sintáctico <br> Descendente</center> </html>");
         jLabel3.setToolTipText("");
 
+        jLabel7.setText("Archivo actual: ");
+
+        readFileLabel.setText("Ninguno");
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel2)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addGap(65, 65, 65)
-                            .addComponent(jButton1)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(43, 43, 43)))
-                .addGap(101, 101, 101))
+                        .addContainerGap()
+                        .addComponent(jSeparator1))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(jLabel7)
+                        .addGap(4, 4, 4)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(readFileLabel)
+                            .addComponent(jLabel2)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(65, 65, 65)
+                                .addComponent(jButton1))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(41, 41, 41)
+                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 91, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(152, 152, 152))
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(24, 24, 24)
+                .addGap(28, 28, 28)
                 .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(51, 51, 51)
+                .addGap(30, 30, 30)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(9, 9, 9)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
-                .addContainerGap(69, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(readFileLabel))
+                .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Archivo", jPanel3);
+        jTabbedPane.addTab("Archivo", jPanel3);
 
         jLabel1.setText("Producciones sin vicios");
 
@@ -263,7 +315,7 @@ public class UI extends javax.swing.JFrame {
                     .addContainerGap()))
         );
 
-        jTabbedPane1.addTab("GIC sin vicios", jPanel2);
+        jTabbedPane.addTab("GIC sin vicios", jPanel2);
 
         firstJList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -313,7 +365,7 @@ public class UI extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Prim/Sgte", jPanel1);
+        jTabbedPane.addTab("Prim/Sgte", jPanel1);
 
         mJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -357,7 +409,7 @@ public class UI extends javax.swing.JFrame {
                 .addContainerGap(8, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Tabla M", jPanel4);
+        jTabbedPane.addTab("Tabla M", jPanel4);
 
         jLabel6.setText("Validar una cadena");
 
@@ -422,17 +474,17 @@ public class UI extends javax.swing.JFrame {
                 .addContainerGap(9, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Reconocimiento", jPanel5);
+        jTabbedPane.addTab("Reconocimiento", jPanel5);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addComponent(jTabbedPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -441,6 +493,13 @@ public class UI extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         this.testAString();
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        int returnVal = this.jFileChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            this.readCFGFromFile(jFileChooser.getSelectedFile());
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -482,12 +541,14 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JList<String> followingJList;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JFileChooser jFileChooser;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -499,9 +560,10 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTabbedPane jTabbedPane;
     private javax.swing.JTable mJTable;
     private javax.swing.JList<String> productionsJList;
+    private javax.swing.JLabel readFileLabel;
     private javax.swing.JTable recognitionJTable;
     private javax.swing.JTextField txtValidationString;
     // End of variables declaration//GEN-END:variables
