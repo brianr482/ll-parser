@@ -250,7 +250,7 @@ public class ContextFreeGrammarController {
         return terminalList;
     }
     
-    private static boolean isNonterminal(
+    public static boolean isNonterminal(
         ArrayList<NonterminalSymbol> cfg, String symbol
     ) {
         return cfg.stream().anyMatch(nonterminalSymbol -> 

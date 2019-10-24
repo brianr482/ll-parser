@@ -19,14 +19,6 @@ public class NonterminalSymbol {
     private Set<String> firstList;
     private Set<String> followingList;
     private Map<String, String> mTableAssociation;
-
-    public Set<String> getFollowingList() {
-        return followingList;
-    }
-
-    public void setFollowingList(Set<String> followingList) {
-        this.followingList = followingList;
-    }
     
     public NonterminalSymbol(String symbol, ArrayList<String> productions) {
         this.symbol = symbol;
@@ -68,5 +60,13 @@ public class NonterminalSymbol {
 
     public void setmTableAssociation(Map<String, String> mTableAssociation) {
         this.mTableAssociation = mTableAssociation;
+    }
+    
+    public Set<String> getFollowingList() {
+        return followingList;
+    }
+
+    public void setFollowingList(Set<String> followingList) {
+        this.followingList = followingList;
     }
 }
