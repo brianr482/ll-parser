@@ -112,13 +112,9 @@ public class UI extends javax.swing.JFrame {
             : list.entrySet()) {
             String parsedNonterminalSymbolFirstPost = label + "("
                 + nonterminalSymbol.getKey() + ") = { ";
-            parsedNonterminalSymbolFirstPost = nonterminalSymbol.getValue()
-                .stream()
-                .map((terminal) -> terminal + ", ")
-                .reduce(parsedNonterminalSymbolFirstPost, String::concat);
-            parsedNonterminalSymbolFirstPost = parsedNonterminalSymbolFirstPost
-                .substring(0, parsedNonterminalSymbolFirstPost.length() - 2);
-            
+            parsedNonterminalSymbolFirstPost += String.join(
+                " ,", nonterminalSymbol.getValue()
+            );
             parsedNonterminalSymbolFirstPost += " }";
             dlm.addElement(parsedNonterminalSymbolFirstPost);
         }
