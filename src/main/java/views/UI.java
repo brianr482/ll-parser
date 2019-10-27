@@ -8,6 +8,7 @@ package views;
 import models.NonterminalSymbol;
 import controllers.ContextFreeGrammarController;
 import controllers.RecognitionController;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,11 +36,15 @@ public class UI extends javax.swing.JFrame {
     private ArrayList<NonterminalSymbol> cfg;
     public UI() {
         initComponents();
+        this.mTableModel = new DefaultTableModel();
+        this.recognitonTableModel = new DefaultTableModel();
+        this.setup();
+    }
+    
+    private void setup() {
         this.productionsJList.setModel(new DefaultListModel());
         this.firstJList.setModel(new DefaultListModel());
         this.followingJList.setModel(new DefaultListModel());
-        this.mTableModel = new DefaultTableModel();
-        this.recognitonTableModel = new DefaultTableModel();
         this.mJTable.setModel(mTableModel);
         this.recognitionJTable.setModel(recognitonTableModel);
         this.recognitonTableModel.addColumn("Pila");
@@ -49,6 +54,8 @@ public class UI extends javax.swing.JFrame {
         this.jFileChooser.setFileFilter(
             new FileNameExtensionFilter("TEXT FILES", "txt", "text")
         );
+        this.firstJList.setBackground(Color.WHITE);
+        this.followingJList.setBackground(Color.WHITE);
     }
     
     private void test() {
@@ -96,6 +103,7 @@ public class UI extends javax.swing.JFrame {
     private void showCFG() {
         DefaultListModel dlm  = (DefaultListModel) this.productionsJList
             .getModel();
+        dlm.removeAllElements();
         this.cfg.forEach((gs) -> {
             gs.getProductions().forEach((production) -> {
                 dlm.addElement(gs.getSymbol() + "->" + production);
@@ -108,6 +116,7 @@ public class UI extends javax.swing.JFrame {
     ) {
         DefaultListModel dlm  = (DefaultListModel) jList
             .getModel();
+        dlm.removeAllElements();
         for (Map.Entry<String,Set<String>> nonterminalSymbol 
             : list.entrySet()) {
             String parsedNonterminalSymbolFirstPost = label + "("
@@ -122,6 +131,7 @@ public class UI extends javax.swing.JFrame {
 
     private void populateMTable(Set<String> terminalList) {
         this.mTableModel.setColumnCount(0);
+        this.mTableModel.setRowCount(0);
         this.mTableModel.setRowCount(this.cfg.size());
         this.populateMTableMainColumns(terminalList);
         for (int i = 0; i < this.cfg.size(); i++) {
@@ -313,18 +323,8 @@ public class UI extends javax.swing.JFrame {
 
         jTabbedPane.addTab("GIC sin vicios", jPanel2);
 
-        firstJList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane2.setViewportView(firstJList);
 
-        followingJList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane3.setViewportView(followingJList);
 
         jLabel4.setText("Primero");
