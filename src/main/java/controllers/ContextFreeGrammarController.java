@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -191,33 +192,75 @@ public class ContextFreeGrammarController {
         Map<String, Set<String>> dependentPending = new LinkedHashMap<>();
         pending.entrySet().forEach((pend) -> {
             Set<String> firstPositions = pend.getValue();
-            firstPositions.forEach((nonterminal) -> {
-                String key = pend.getKey();
-                Map<String, Set<String>> map = pending.containsKey(nonterminal)
-                        ? dependentPending : sortedPending;
-                map.put(key, pend.getValue());
-            });
+            String key = pend.getKey();
+            Map<String, Set<String>> map = firstContainsPending(pending, firstPositions)
+                ? dependentPending : sortedPending;
+            map.put(key, pend.getValue());
         });
         sortedPending.putAll(dependentPending);
-        sortedPending.entrySet().forEach((pend) -> {
-            Set<String> nonterminalFirstPosList =  firstPositionList
-                .get(pend.getKey());
-            pend.getValue().forEach(pendingFirstPos -> {
-                Set<String> pendingFirstPosList = firstPositionList
-                    .get(pendingFirstPos);
-                NonterminalSymbol ns = cfg.stream()
-                    .filter(nte -> nte.getSymbol().equals(pend.getKey()))
-                    .findAny()
-                    .orElse(null);
-                String prodForMTable = ns.getmTableAssociation()
-                    .get(pendingFirstPos);
-                ns.getmTableAssociation().remove(pendingFirstPos);
-                pendingFirstPosList.forEach(terminal -> {
-                    nonterminalFirstPosList.add(terminal);
-                    ns.getmTableAssociation().put(terminal, prodForMTable);
+        Iterator<Map.Entry<String, Set<String>>> it = sortedPending.entrySet()
+            .iterator();
+        while (sortedPending.size() > 0) {
+            Map.Entry<String, Set<String>> pend = it.next();
+            if (!firstContainsPending(sortedPending, pend.getValue())) {
+                Set<String> nonterminalFirstPosList =  firstPositionList
+                    .get(pend.getKey());
+                pend.getValue().forEach(pendingFirstPos -> {
+                    Set<String> pendingFirstPosList = firstPositionList
+                        .get(pendingFirstPos);
+                    NonterminalSymbol ns = cfg.stream()
+                        .filter(nte -> nte.getSymbol().equals(pend.getKey()))
+                        .findAny()
+                        .orElse(null);
+                    String prodForMTable = ns.getmTableAssociation()
+                        .get(pendingFirstPos);
+                    ns.getmTableAssociation().remove(pendingFirstPos);
+                    pend.getValue().remove(pendingFirstPos);
+                    pendingFirstPosList.forEach(terminal -> {
+                        if (terminal.equals("&")) {
+                            int followingIndex = prodForMTable
+                                .indexOf(pendingFirstPos) + 1;
+                            if (followingIndex < prodForMTable.length()) {
+                                int endIndex = followingIndex + 1;
+                                String followingGSymbol = prodForMTable.substring(
+                                    followingIndex, endIndex
+                                );
+                                if (isNonterminal(cfg, followingGSymbol)) {
+                                    if (
+                                        followingIndex + 1 < prodForMTable.length()
+                                        && prodForMTable.substring(
+                                            followingIndex + 1, endIndex + 1
+                                        ).equals("'")
+                                    ) {
+                                        endIndex++;
+                                    }
+                                    followingGSymbol = prodForMTable.substring(
+                                        followingIndex, endIndex
+                                    );
+                                    pend.getValue().add(followingGSymbol);
+                                } else {
+                                    nonterminalFirstPosList.add(followingGSymbol);
+                                }
+                                ns.getmTableAssociation()
+                                    .put(followingGSymbol, prodForMTable);
+                            } else {
+                                nonterminalFirstPosList.add(terminal);
+                                ns.getmTableAssociation().put(terminal, prodForMTable);
+                            }
+                        } else {
+                            nonterminalFirstPosList.add(terminal);
+                            ns.getmTableAssociation().put(terminal, prodForMTable);
+                        }
+                    });
                 });
-            });
-        });
+                if (pend.getValue().isEmpty()) {
+                    it.remove();
+                }
+            }
+            if (!it.hasNext()) {
+                it = sortedPending.entrySet().iterator();
+            }
+        } 
         return firstPositionList;
     }
     
@@ -255,6 +298,14 @@ public class ContextFreeGrammarController {
     ) {
         return cfg.stream().anyMatch(nonterminalSymbol -> 
             nonterminalSymbol.getSymbol().equals(symbol)
+        );
+    }
+    
+    private static boolean firstContainsPending(
+        Map<String, Set<String>> pendingList, Set<String> pend
+    ) {
+        return pend.stream().anyMatch(nonterminal -> 
+            pendingList.containsKey(nonterminal)
         );
     }
     

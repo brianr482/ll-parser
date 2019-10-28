@@ -122,7 +122,7 @@ public class UI extends javax.swing.JFrame {
             String parsedNonterminalSymbolFirstPost = label + "("
                 + nonterminalSymbol.getKey() + ") = { ";
             parsedNonterminalSymbolFirstPost += String.join(
-                " ,", nonterminalSymbol.getValue()
+                ", ", nonterminalSymbol.getValue()
             );
             parsedNonterminalSymbolFirstPost += " }";
             dlm.addElement(parsedNonterminalSymbolFirstPost);
