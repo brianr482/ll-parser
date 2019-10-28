@@ -81,30 +81,39 @@ public class ContextFreeGrammarController {
                 .filter(nt -> !nt.getSymbol().equals(nonterminalSymbol))
                 .forEach(nt -> {
                 nt.getProductions().forEach(production -> {
+                    int index = production.indexOf(nonterminalSymbol);
                     if (production.endsWith(nonterminalSymbol)) {
                         pending.putIfAbsent(
                             nonterminalSymbol, new LinkedHashSet<>()
                         );
                         pending.get(nonterminalSymbol).add(nt.getSymbol());
-                    } else if (production.contains(nonterminalSymbol)) {
-                        int followingIndex = production
-                            .indexOf(nonterminalSymbol) + 1;
+                    } else if (
+                        index > -1
+                        && (index + 1 < production.length() 
+                            && !production.substring(index + 1, index + 2).equals("'")
+                        )
+                    ) {
+                        int followingIndex = index + 1;
                         int followingSymbolIndexLimit = followingIndex + 1;
-                        if (
-                            followingIndex + 1 != production.length() 
-                            && production.substring(
-                                followingIndex + 1, followingIndex + 2
-                            ).equals("'")
-                        ) {
-                            followingSymbolIndexLimit++;
-                        }
                         String followingGSymbol = production.substring(
                             followingIndex,
                             followingSymbolIndexLimit
                         );
                         if (isNonterminal(cfg, followingGSymbol)) {
+                            if (
+                                followingIndex + 1 < production.length() 
+                                && production.substring(
+                                    followingIndex + 1, followingSymbolIndexLimit + 1
+                                ).equals("'")
+                            ) {
+                                followingSymbolIndexLimit++;
+                            }
+                            String completedFollowingSymbol = production.substring(
+                                followingIndex,
+                                followingSymbolIndexLimit
+                            );
                             Set<String> foreignFirstList = cfg.stream().filter(
-                                nte -> nte.getSymbol().equals(followingGSymbol)
+                                (nte) -> nte.getSymbol().equals(completedFollowingSymbol)
                             ).findAny().orElse(null).getFirstList();
                             foreignFirstList.forEach(terminal -> {
                                 if (terminal.equals("&")) {
@@ -112,17 +121,13 @@ public class ContextFreeGrammarController {
                                         nonterminalSymbol, new LinkedHashSet<>()
                                     );
                                     pending.get(nonterminalSymbol)
-                                        .add(nt.getSymbol());
+                                        .add(completedFollowingSymbol);
                                 } else {
                                     followingList.get(nonterminalSymbol).add(
                                         terminal
                                    );
                                 }
                             });
-                            pending.putIfAbsent(
-                                nonterminalSymbol, new LinkedHashSet<>()
-                            );
-                            pending.get(nonterminalSymbol).add(followingGSymbol);
                         } else {
                             followingList.get(nonterminalSymbol).add(
                                 followingGSymbol
@@ -137,27 +142,37 @@ public class ContextFreeGrammarController {
         Map<String, Set<String>> dependentPending = new LinkedHashMap<>();
         pending.entrySet().forEach((pend) -> {
             Set<String> followingSet = pend.getValue();
-            followingSet.forEach((nonterminal) -> {
-                String key = pend.getKey();
-                Map<String, Set<String>> map = pending.containsKey(nonterminal)
-                        ? dependentPending : sortedPending;
-                map.put(key, pend.getValue());
-            });
+            String key = pend.getKey();
+            Map<String, Set<String>> map = firstFollowingContainsPending(pending, followingSet)
+                ? dependentPending : sortedPending;
+            map.put(key, pend.getValue());
         });
         sortedPending.putAll(dependentPending);
-        sortedPending.entrySet().forEach((pend) -> {
-            Set<String> nonterminalFollowingList =  followingList
-                .get(pend.getKey());
-            pend.getValue().forEach(pendingFollowing -> {
-                Set<String> pendingFollowingList = followingList
-                    .get(pendingFollowing);
-                pendingFollowingList.forEach(terminal -> {
-                    nonterminalFollowingList.add(terminal);
+        Iterator<Map.Entry<String, Set<String>>> it = sortedPending.entrySet()
+            .iterator();
+        while (sortedPending.size() > 0) {
+            Map.Entry<String, Set<String>> pend = it.next();
+            if (!firstFollowingContainsPending(sortedPending, pend.getValue())) {
+                Set<String> nonterminalFollowingList =  followingList
+                    .get(pend.getKey());
+                pend.getValue().forEach(pendingFollowing -> {
+                    Set<String> pendingFollowingList = followingList
+                        .get(pendingFollowing);
+                    pendingFollowingList.forEach(terminal -> {
+                        nonterminalFollowingList.add(terminal);
+                    });
                 });
-            });
-        });
+                pend.getValue().clear();
+                if (pend.getValue().isEmpty()) {
+                    it.remove();
+                }
+            }
+            if (!it.hasNext()) {
+                it = sortedPending.entrySet().iterator();
+            }
+        }
         completeCFGMAssociation(cfg);
-       return followingList;
+        return followingList;
     }
     
     public static Map<String, Set<String>> getFirstPositionList(
@@ -193,16 +208,16 @@ public class ContextFreeGrammarController {
         pending.entrySet().forEach((pend) -> {
             Set<String> firstPositions = pend.getValue();
             String key = pend.getKey();
-            Map<String, Set<String>> map = firstContainsPending(pending, firstPositions)
+            Map<String, Set<String>> map = firstFollowingContainsPending(pending, firstPositions)
                 ? dependentPending : sortedPending;
             map.put(key, pend.getValue());
         });
         sortedPending.putAll(dependentPending);
         Iterator<Map.Entry<String, Set<String>>> it = sortedPending.entrySet()
             .iterator();
-        while (sortedPending.size() > 0) {
+        while (!sortedPending.isEmpty()) {
             Map.Entry<String, Set<String>> pend = it.next();
-            if (!firstContainsPending(sortedPending, pend.getValue())) {
+            if (!firstFollowingContainsPending(sortedPending, pend.getValue())) {
                 Set<String> nonterminalFirstPosList =  firstPositionList
                     .get(pend.getKey());
                 pend.getValue().forEach(pendingFirstPos -> {
@@ -301,7 +316,7 @@ public class ContextFreeGrammarController {
         );
     }
     
-    private static boolean firstContainsPending(
+    private static boolean firstFollowingContainsPending(
         Map<String, Set<String>> pendingList, Set<String> pend
     ) {
         return pend.stream().anyMatch(nonterminal -> 
