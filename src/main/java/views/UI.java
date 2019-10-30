@@ -87,6 +87,7 @@ public class UI extends javax.swing.JFrame {
             this.populateMTable(terminalList);
             this.readFileLabel.setText(file.getName());
             this.toggleTabs(true);
+            this.recognitonTableModel.setRowCount(0);
             JOptionPane.showMessageDialog(
                 this,
                 "El archivo se ha leído correctamente"
@@ -159,7 +160,7 @@ public class UI extends javax.swing.JFrame {
     }
     
     private void testAString() {
-        String string = this.txtValidationString.getText();
+        String string = this.txtValidationString.getText().replaceAll("&", "");
         this.recognitonTableModel.setRowCount(0);
         ArrayList<RecognitionRecord> history = RecognitionController
             .testString(this.cfg, string);
