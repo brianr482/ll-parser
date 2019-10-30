@@ -78,13 +78,14 @@ public class ContextFreeGrammarController {
             nonterminal.setFollowingList(nonterminalFollowingList);
             String nonterminalSymbol = nonterminal.getSymbol();
             if (!nonterminalSymbol.endsWith("'")) {
-                cfg.stream()
-                    .filter(nt -> !nt.getSymbol().endsWith("'"))
+                cfg.stream()                    
                     .forEach(nt -> {
                         nt.getProductions().forEach(production -> {
                             if (
-                               !nt.getSymbol().equals(nonterminalSymbol) 
+                               (!nt.getSymbol().equals(nonterminalSymbol) && !nt.getSymbol().endsWith("'"))
+                               || (!nt.getSymbol().equals(nonterminalSymbol) && nt.getSymbol().endsWith("'") && !production.endsWith(nonterminalSymbol))
                                || (nt.getSymbol().equals(nonterminalSymbol) && !production.endsWith(nonterminalSymbol))
+                               || (nt.getSymbol().equals(nonterminalSymbol + "'") && !production.endsWith(nonterminalSymbol))
                             ) {
                                 int index = production.indexOf(nonterminalSymbol);
                                 if (production.endsWith(nonterminalSymbol)) {
