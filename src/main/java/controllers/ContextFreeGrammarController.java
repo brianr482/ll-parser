@@ -77,71 +77,81 @@ public class ContextFreeGrammarController {
             );
             nonterminal.setFollowingList(nonterminalFollowingList);
             String nonterminalSymbol = nonterminal.getSymbol();
-            cfg.stream()
-                .filter(nt -> !nt.getSymbol().endsWith("'"))
-                .forEach(nt -> {
-                    nt.getProductions().forEach(production -> {
-                        if (
-                           !nt.getSymbol().equals(nonterminalSymbol) 
-                           || (nt.getSymbol().equals(nonterminalSymbol) && !production.endsWith(nonterminalSymbol))
-                        ) {
-                            int index = production.indexOf(nonterminalSymbol);
-                            if (production.endsWith(nonterminalSymbol)) {
-                                pending.putIfAbsent(
-                                    nonterminalSymbol, new LinkedHashSet<>()
-                                );
-                                pending.get(nonterminalSymbol).add(nt.getSymbol());
-                            } else if (
-                                index > -1
-                                && (index + 1 < production.length() 
-                                    && !production.substring(index + 1, index + 2).equals("'")
-                                )
-                            )   {
-                                int followingIndex = index + 1;
-                                int followingSymbolIndexLimit = followingIndex + 1;
-                                String followingGSymbol = production.substring(
-                                    followingIndex,
-                                    followingSymbolIndexLimit
-                                );
-                                if (isNonterminal(cfg, followingGSymbol)) {
-                                    if (
-                                        followingIndex + 1 < production.length() 
-                                        && production.substring(
-                                            followingIndex + 1, followingSymbolIndexLimit + 1
-                                        ).equals("'")
-                                    ) {
-                                        followingSymbolIndexLimit++;
+            if (!nonterminalSymbol.endsWith("'")) {
+                cfg.stream()
+                    .filter(nt -> !nt.getSymbol().endsWith("'"))
+                    .forEach(nt -> {
+                        nt.getProductions().forEach(production -> {
+                            if (
+                               !nt.getSymbol().equals(nonterminalSymbol) 
+                               || (nt.getSymbol().equals(nonterminalSymbol) && !production.endsWith(nonterminalSymbol))
+                            ) {
+                                int index = production.indexOf(nonterminalSymbol);
+                                if (production.endsWith(nonterminalSymbol)) {
+                                    pending.putIfAbsent(
+                                        nonterminalSymbol, new LinkedHashSet<>()
+                                    );
+                                    if (nt.getSymbol().endsWith("'")) {
+                                        pending.get(nonterminalSymbol)
+                                             .add(nt.getSymbol().substring(0, nt.getSymbol().length() - 1));
+                                    } else {
+                                        pending.get(nonterminalSymbol).add(nt.getSymbol());
                                     }
-                                    String completedFollowingSymbol = production.substring(
+                                } else if (
+                                    index > -1
+                                    && (index + 1 < production.length() 
+                                        && !production.substring(index + 1, index + 2).equals("'")
+                                    )
+                                )   {
+                                    int followingIndex = index + 1;
+                                    int followingSymbolIndexLimit = followingIndex + 1;
+                                    String followingGSymbol = production.substring(
                                         followingIndex,
                                         followingSymbolIndexLimit
                                     );
-                                    Set<String> foreignFirstList = cfg.stream().filter(
-                                        (nte) -> nte.getSymbol().equals(completedFollowingSymbol)
-                                    ).findAny().orElse(null).getFirstList();
-                                    foreignFirstList.forEach(terminal -> {
-                                        if (terminal.equals("&")) {
-                                            pending.putIfAbsent(
-                                                nonterminalSymbol, new LinkedHashSet<>()
-                                            );
-                                            pending.get(nonterminalSymbol)
-                                                .add(completedFollowingSymbol);
-                                        } else {
-                                            followingList.get(nonterminalSymbol).add(
-                                                terminal
-                                           );
+                                    if (isNonterminal(cfg, followingGSymbol)) {
+                                        if (
+                                            followingIndex + 1 < production.length() 
+                                            && production.substring(
+                                                followingIndex + 1, followingSymbolIndexLimit + 1
+                                            ).equals("'")
+                                        ) {
+                                            followingSymbolIndexLimit++;
                                         }
-                                    });
-                                } else {
-                                    followingList.get(nonterminalSymbol).add(
-                                        followingGSymbol
-                                    );
+                                        String completedFollowingSymbol = production.substring(
+                                            followingIndex,
+                                            followingSymbolIndexLimit
+                                        );
+                                        Set<String> foreignFirstList = cfg.stream().filter(
+                                            (nte) -> nte.getSymbol().equals(completedFollowingSymbol)
+                                        ).findAny().orElse(null).getFirstList();
+                                        foreignFirstList.forEach(terminal -> {
+                                            if (terminal.equals("&")) {
+                                                pending.putIfAbsent(
+                                                    nonterminalSymbol, new LinkedHashSet<>()
+                                                );
+                                                if (completedFollowingSymbol.endsWith("'")) {
+                                                    pending.get(nonterminalSymbol)
+                                                         .add(completedFollowingSymbol.substring(0, completedFollowingSymbol.length() - 1));
+                                                } else {
+                                                    pending.get(nonterminalSymbol).add(completedFollowingSymbol);
+                                                }
+                                            } else {
+                                                followingList.get(nonterminalSymbol)
+                                                     .add(terminal);
+                                            }
+                                        });
+                                    } else {
+                                        followingList.get(nonterminalSymbol).add(
+                                            followingGSymbol
+                                        );
+                                    }
                                 }
                             }
                         }
-                    }
-                );
-            });
+                    );
+                });
+            }
         });
         followingList.get(cfg.get(0).getSymbol()).add("$");
         Map<String, Set<String>> sortedPending = new LinkedHashMap<>();
@@ -177,6 +187,13 @@ public class ContextFreeGrammarController {
                 it = sortedPending.entrySet().iterator();
             }
         }
+        cfg.stream()
+            .filter(nt -> nt.getSymbol().endsWith("'"))
+            .forEach(nt -> {
+                String nonterminalSymbol = nt.getSymbol();
+                followingList.get(nonterminalSymbol).addAll(followingList.get(nonterminalSymbol.substring(0, (nonterminalSymbol.length() - 1))));
+                nt.getFollowingList().addAll(followingList.get(nonterminalSymbol.substring(0, (nonterminalSymbol.length() - 1))));
+            });
         completeCFGMAssociation(cfg);
         return followingList;
     }
