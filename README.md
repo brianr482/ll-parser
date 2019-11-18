@@ -8,4 +8,4 @@ It's a non-recursive descent parser. It does the following:
 - Evaluate an string and show all steps of the recognition.
 
 **Note**:
-It only works with context free grammars.
+It only works with context-free grammars.
